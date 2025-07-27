@@ -72,7 +72,7 @@ It terminates operations gracefully.
 
 ## Go routines
 
-### Overview
+### Goroutine Overview
 
 - Threads managed by go runtime
 - Functions run indipendently
@@ -93,9 +93,9 @@ func main() {
 
 func sayHello(msg string) {
     for range 5 {
-	    fmt.Println(msg)
-	    time.Sleep(time.Second)
-	}
+     fmt.Println(msg)
+     time.Sleep(time.Second)
+ }
 }
 ```
 
@@ -107,20 +107,66 @@ Pass information without expliciting function paramenters.
 package main
 
 import (
-	"context"
-	"time"
+ "context"
+ "time"
 )
 
 func main() {
-	// create a context
-	ctx := context.Background()
-	// create cancelable context with a timeout
-	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
-	defer cancel() // ensure resources are cleaned up
-	myRoutine(ctx)
+ // create a context
+ ctx := context.Background()
+ // create cancelable context with a timeout
+ ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+ defer cancel() // ensure resources are cleaned up
+ myRoutine(ctx)
 }
 
 func myRoutine(ctx context.Context) {
-	<-ctx.Done()
+ <-ctx.Done()
+}
+```
+
+## Using Context in database operations
+
+### Overview
+
+- Connection pooling
+- Cancellations
+
+### Queries
+
+### Transactions
+
+```go
+func queryUser(ctx context.Context, db *sql.DB, userID string) (User, error) {
+ tenantID := ctx.Value("tenantID").(string)
+ var user User
+ err := db.QueryRowContext(ctx, "SELECT id, name FROM users WHERE id = ? AND tenant_id = ?", userID, tenantID).Scan(&user.ID, &user.Name)
+ if err != nil {
+  return User{}, err
+ }
+ return user, nil
+}
+```
+
+### Transactions
+
+- Commit or rollback transaction
+
+```go
+func updateUser(ctx context.Context, db *sql.DB, user User) error {
+ tenantID := ctx.Value("tenantID").(string)
+
+ tx, err := db.BeginTx(ctx, nil)
+ if err != nil {
+  return err
+ }
+
+ _, err = tx.ExecContext(ctx, "UPDATE users SET name = ? WHERE id = ? AND tenant_id = ?", user.Name, user.ID, tenantID)
+ if err != nil {
+  tx.Rollback()
+  return err
+ }
+
+ return tx.Commit()
 }
 ```
