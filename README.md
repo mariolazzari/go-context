@@ -1,1 +1,126 @@
-# gp-context
+# Context Package In Go Lang
+
+## Introduction
+
+### Context package
+
+- Go standard lib
+- Helps manage request-scoped values and deadlines
+- Individual requests or operations
+- Deadlines
+- Cancellation signals
+- Request scoped values
+
+#### Context type
+
+Container for passing in formations between functions and go routines.
+
+#### Context with deadlines
+
+It allows you to set a time limit for specific operations and handle them accordingly.
+
+#### Context with timeout
+
+It sets a timeout for an operation and hanfle it accordingly.
+
+#### Context with values
+
+It adds additional values to specific request.
+
+### Value passing context
+
+Concurretly safe:
+  
+- tokens
+- request IDs
+
+```go
+ctx := context.WithValue(parentContext, key, value)
+val := ctx.Value(key)
+```
+
+### Context functions and methods
+
+- Manage life cycles and cancellations
+- Creates new context
+
+```go
+ctx, cancel := context.WithCancel(context.Background())
+defer cancel()
+
+go func(){
+    // operations
+    cancel()
+}()
+
+ctx, cancel := context.WithTimeout(context.Background())
+time.Duration(time.Millisecond * 100)
+defer cancel()
+req = req.WithContext(ctx)
+```
+
+### Context cancellation
+
+It terminates operations gracefully.
+
+### Use cases
+
+- Go routines
+- Database transactions
+- HTTP requests
+- Testing
+
+## Go routines
+
+### Overview
+
+- Threads managed by go runtime
+- Functions run indipendently
+- Concurrency
+
+```go
+package main
+
+import (
+ "fmt"
+ "time"
+)
+
+func main() {
+    go sayHello(("Hello"))
+    sayHello("World")
+}
+
+func sayHello(msg string) {
+    for range 5 {
+	    fmt.Println(msg)
+	    time.Sleep(time.Second)
+	}
+}
+```
+
+### Managing context in go routines
+
+Pass information without expliciting function paramenters.
+
+```go
+package main
+
+import (
+	"context"
+	"time"
+)
+
+func main() {
+	// create a context
+	ctx := context.Background()
+	// create cancelable context with a timeout
+	ctx, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel() // ensure resources are cleaned up
+	myRoutine(ctx)
+}
+
+func myRoutine(ctx context.Context) {
+	<-ctx.Done()
+}
+```
